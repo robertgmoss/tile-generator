@@ -124,7 +124,7 @@ packages:
   ephemeral_disk: 4096
   persistent_disk: 2048
   instances: 1
-  manifest: |
+  manifest:
     containers:
     - name: app
       image: "guidowb/sample-cf-app" # should match the docker image name
