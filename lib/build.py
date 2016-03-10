@@ -42,8 +42,14 @@ def validate_config(config):
 			if validname.match(package['name']) is None:
 				print >> sys.stderr, 'package name must start with a letter, be all lower-case letters or numbers, with words optionally seperated by hyphens'
 				sys.exit(1)
+			if package['type'] == 'docker-app':
+				package['image']
 		except KeyError as e:
-			print >> sys.stderr, 'package is missing mandatory property', e
+			name = package.get('name')
+			if name is None:
+				print >> sys.stderr, 'tile.yml contains unnamed package'
+			else:
+				print >> sys.stderr, 'package', name, 'is missing mandatory property', e
 			sys.exit(1)
 	return config
 
@@ -53,13 +59,39 @@ def upgrade_config(config):
 		auto_services = package.get('auto_services', None)
 		if auto_services is not None:
 			if isinstance(auto_services, basestring):
+				print >> sys.stderr, 'WARNING', package['name'], 'uses deprecated string format for auto_services'
+				print >> sys.stderr, 'WARNING - Use YAML array of services instead'
 				package['auto_services'] = [ { 'name': s } for s in auto_services.split()]
 	# v0.9 expected a string manifest for docker-bosh releases
 	for package in config.get('packages', []):
 		if package.get('type') == 'docker-bosh':
 			manifest = package.get('manifest')
 			if manifest is not None and isinstance(manifest, basestring):
+				print >> sys.stderr, 'WARNING', package['name'], 'uses deprecated string format for docker-bosh manifest'
+				print >> sys.stderr, 'WARNING - Use YAML hash instead'
 				package['manifest'] = yaml.safe_load(manifest)
+	# v0.9 allowed specification of path in root of package for apps
+	for package in config.get('packages', []):
+		if package.get('type') == 'app' or package.get('type').startswith('app-'):
+			path = package.get('path')
+			manifest = package.get('manifest', {})
+			if path is not None:
+				print >> sys.stderr, 'WARNING', package['name'], 'uses deprecated path property'
+				manifest_path = manifest.get('path')
+				if manifest_path is None:
+					print >> sys.stderr, 'WARNING - Specify the path in the manifest section instead'
+					manifest['path'] = path
+				else:
+					print >> sys.stderr, 'WARNING - Ignored in favor of the path specified in the manifest'
+			package['manifest'] = manifest
+	# v0.9 allowed specification of arbitrary files for packages
+	for package in config.get('packages', []):
+		if package.get('files') is not None:
+			if package.get('type') == 'docker-bosh':
+				print >> sys.stderr, 'WARNING', package['name'], 'uses deprecated files property'
+				print >> sys.stderr, 'WARNING - use --docker-cache option instead'
+			else:
+				print >> sys.stderr, 'WARNING', package['name'], 'uses deprecated files property - Ignored'
 
 def add_defaults(context):
 	context['stemcell_criteria'] = context.get('stemcell_criteria', {})
@@ -252,11 +284,14 @@ def add_package(dir, context, package, alternate_template=None):
 		'files': []
 	}
 	with cd('..'):
+		# users can specify any number of additional files to add to the package
 		files = package.get('files', [])
+		# extract (and correct) path in root of package (for backward compatibility only)
 		path = package.get('path', None)
 		if path is not None:
 			files += [ { 'path': path } ]
 			package['path'] = os.path.basename(path)
+		# extract (and correct) path in manifest section (should only be for apps)
 		manifest = package.get('manifest', None)
 		manifest_path = None
 		if type(manifest) is dict:
@@ -264,15 +299,18 @@ def add_package(dir, context, package, alternate_template=None):
 		if manifest_path is not None:
 			files += [ { 'path': manifest_path } ]
 			package['manifest']['path'] = os.path.basename(manifest_path)
+		# now copy all files into the target directory, and add them to the package context
 		for file in files:
 			filename = file.get('name', os.path.basename(file['path']))
 			file['name'] = filename
 			urllib.urlretrieve(file['path'], os.path.join(target_dir, filename))
 			package_context['files'] += [ filename ]
+		# same for docker images (this can probbaly be ignored in favor of reading the docker-bosh manifest)
 		for docker_image in package.get('docker_images', []):
 			filename = docker_image.lower().replace('/','-').replace(':','-') + '.tgz'
 			download_docker_image(docker_image, os.path.join(target_dir, filename), cache=context.get('docker_cache', None))
 			package_context['files'] += [ filename ]
+	# handle app manifest
 	if package.get('is_app', False):
 		manifest = package.get('manifest', { 'name': name })
 		if manifest.get('random-route', False):
@@ -284,6 +322,14 @@ def add_package(dir, context, package, alternate_template=None):
 			f.write(yaml.safe_dump(manifest, default_flow_style=False))
 		package_context['files'] += [ 'manifest.yml' ]
 		update_memory(context, manifest)
+	if package.get('is_docker_bosh', False) and int(DOCKER_BOSHRELEASE_VERSION) > 23:
+		manifest = package.get('manifest', {})
+		for container in manifest.get('containers', []):
+			env_vars = container.get('env_vars', [])
+			for property in context['all_properties']:
+				env_vars += [ property['name'].upper() + '=(( .properties.' + property['name'] + '.value ))' ]
+		if len(env_vars) > 0:
+			container['env_vars'] = env_vars
 	template.render(
 		os.path.join(package_dir, 'spec'),
 		os.path.join(template_dir, 'spec'),
@@ -353,9 +399,16 @@ def download_docker_release():
 	release_version = DOCKER_BOSHRELEASE_VERSION
 	release_file = release_name + '-boshrelease-' + release_version + '.tgz'
 	release_tarball = release_file
+	release_local = os.path.realpath(os.path.join('../../resources', release_file))
 	if not os.path.isfile(release_tarball):
-		url = 'https://bosh.io/d/github.com/cf-platform-eng/docker-boshrelease?v=' + release_version
-		download(url, release_tarball)
+		if os.path.isfile(release_local):
+			url = release_local
+			urllib.urlretrieve(url, release_tarball)
+		else:
+			url = 'https://bosh.io/d/github.com/cf-platform-eng/docker-boshrelease?v=' + release_version
+			download(url, release_tarball)
+			# TODO - Verify that this is actually a tarball
+			# Downloading an unknown release results in a valid html file from cloudflare
 	return {
 		'tarball': release_tarball,
 		'name': release_name,
@@ -485,3 +538,4 @@ def download(url, filename):
 		for chunk in response.iter_content(chunk_size=1024):
 			if chunk:
 				file.write(chunk)
+
