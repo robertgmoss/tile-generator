@@ -122,10 +122,31 @@
                 <div class="col-md-9" role="main">
 
 <h1 id="pcf-tile-generator">PCF Tile Generator</h1>
-<p>This is a tile generation utility for PCF tiles. Tiles are the
-installation package format used by Pivotal's Ops Manager to deploy add-on
-software such as services and their brokers, buildpacks, or anything else
-that needs to be installable in both public and private cloud deployments.</p>
+<p>PCF Tile Generator is a suite of tools to help you develop, package, test,
+and deploy services and other add-ons to Pivotal Cloud Foundry. Tiles are the
+installation package format used by Pivotal's Ops Manager to deploy these
+components to both public and private cloud deployments. The tile generator
+uses templates and patterns that are based on years of experience integrating
+third-party services into Cloud Foundry, and eliminates much of the need for
+you to have intimate knowledge of all the tools involved.</p>
+<p><img alt="Overview" src="./img/tilegenerator.png" /></p>
+<p>Tile generator takes your software components, and a simple configuration file
+that provides the minimal amount of information to describe and customize your
+tile. It then creates everything that's required to deploy your software into
+Pivotal Cloud Foundry:</p>
+<ul>
+<li><strong>BOSH errands</strong> to deploy and delete your software, including blue/green
+  deployments for zero-downtime upgrades</li>
+<li>A <strong>BOSH release</strong> suitable for deploying your software to the Elastic Runtime
+  or open-source Cloud Foundry</li>
+<li>A <strong>Pivotal Ops Manager Tile</strong> that can be imported into Ops Manager, installed,
+  configured, and deployed, including UI forms and automatic upgrades from
+  previous versions</li>
+<li>A <strong>Concourse pipeline configuration</strong> to enable Continuous Integration of
+  your software with the latest versions of Pivotal Cloud Foundry</li>
+</ul>
+<p>The Tile Generator suite also contains a <a href="pcf/">utility</a> to enable rapid
+deploy and test cycles of your software.</p>
 <p>The current release of the tile generator supports tiles that have any
 combination of the following package types:</p>
 <ul>
@@ -135,7 +156,7 @@ combination of the following package types:</p>
 <li>Docker images (both inside and outside the Elastic Runtime)</li>
 </ul>
 <h2 id="screencast">Screencast</h2>
-<p>For a 7-minute introduction into what it is and does, see
+<p>For a 7-minute introduction into what tile generator is and does, see
 <a href="https://www.youtube.com/watch?v=_WeJbqNJWzQ">this screencast</a>.</p>
 <h2 id="continuous-integration">Continuous Integration</h2>
 <p>The master branch of this repository is being monitored by
@@ -198,12 +219,15 @@ src/build.sh
 tile build
 </code></pre>
 
+<div class="admonition note">
+<p class="admonition-title">Note:</p>
 <p>The sample tile includes a Python application that is re-used in several packages,
 sometimes as an app, sometimes as a service broker. One of the deployments (app3)
 uses the sample application inside a docker image that is currently only modified
 by the CI pipeline. If you modify the sample app, you will have to build your own
 docker image using the provided <code>Dockerfile</code> and change the image name in
 <code>sample/tile.yml</code> to include the modified code in app3.</p>
+</div>
 <h2 id="defining-your-tile">Defining your Tile</h2>
 <p>All required configuration for your tile is in the file called <code>tile.yml</code>.
 <code>tile init</code> will create an initial version for you that can serve as a template.
@@ -614,5 +638,5 @@ build [patch|minor|major|&lt;version&gt;]
 
 <!--
 MkDocs version : 0.15.3
-Build Date UTC : 2016-04-21 19:15:01.187850
+Build Date UTC : 2016-04-22 15:26:56.968198
 -->
