@@ -4,17 +4,35 @@
     
     <url>
      <loc>None/</loc>
-     <lastmod>2016-04-25</lastmod>
+     <lastmod>2016-05-12</lastmod>
      <changefreq>daily</changefreq>
     </url>
     
 
     
+        
     <url>
-     <loc>None/pcf/</loc>
-     <lastmod>2016-04-25</lastmod>
+     <loc>None/getting-started/</loc>
+     <lastmod>2016-05-12</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>None/stages/</loc>
+     <lastmod>2016-05-12</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    
+
+    
+        
+    <url>
+     <loc>None/pcf/</loc>
+     <lastmod>2016-05-12</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
 </urlset>
