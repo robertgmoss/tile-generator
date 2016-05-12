@@ -128,6 +128,8 @@
     
         <li class="main active"><a href="#getting-started">Getting Started</a></li>
         
+            <li><a href="#step-0-understand-the-concepts">Step 0. Understand the concepts</a></li>
+        
             <li><a href="#step-1-design-the-integration">Step 1. Design the integration</a></li>
         
             <li><a href="#step-2-learn-how-to-build">Step 2. Learn how to build</a></li>
@@ -158,14 +160,25 @@ to ask for our support and/or publish your integration in our
 <a href="../network.pivotal.io">marketplace</a>.</p>
 <p>There are a lot of things you will have to learn and do to complete an
 integration with Cloud Foundry. This page attempts to lay out a typical
-progression of an integration with PCF:</p>
-<h2 id="step-1-design-the-integration">Step 1. Design the integration</h2>
+progression of an integration with PCF.</p>
+<h2 id="step-0-understand-the-concepts">Step 0. Understand the concepts</h2>
 <p>There are <a href="integration-types.md">many ways</a> to integrate products with Cloud Foundry.
 The right one for each product depends on what the product does, and how
 customer applications consume it. To determine the best way to integrate your
 product, you'll need a good understanding of
 <a href="cf-concepts.md">Cloud Foundry concepts</a>
 like applications, containers, services, brokers, and buildpacks.</p>
+<h2 id="step-1-design-the-integration">Step 1. Design the integration</h2>
+<p>With sufficient understanding of both your product, and Cloud Foundry concepts,
+you are in a position to decide what the integration looks like. Integration
+points might include:</p>
+<ul>
+<li>Service Brokers</li>
+<li>Managed Services</li>
+<li>Buidlpacks</li>
+<li>Embedded Agents</li>
+<li>Or any combination of the above</li>
+</ul>
 <p>If you are not intimately familiar with Cloud Foundry, this is one of the
 areas where we can help. We like to do scoping meetings with you, where
 we pair your understanding of your products, with our understanding of
