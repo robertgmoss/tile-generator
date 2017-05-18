@@ -103,7 +103,8 @@ class BoshRelease:
 		for job in self.jobs:
 			self.add_job(job)
 		self.__bosh('upload-blobs')
-		self.tarball = self.__bosh('create-release', '--force', '--final', '--tarball=output.tar.gz', '--version', self.context['version'], capture='Release tarball')
+		self.__bosh('create-release', '--force', '--final', '--tarball=output.tar.gz', '--version', self.context['version'], capture='Release tarball')
+                self.tarball = self.release_dir+'/output.tar.gz'
 		return self.tarball
 
 	def add_job(self, job):
