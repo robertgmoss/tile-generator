@@ -93,7 +93,7 @@ class BoshRelease:
 
 	def build_tarball(self):
 		mkdir_p(self.release_dir)
-		self.__bosh('init', 'release')
+		self.__bosh('init-release')
 		template.render(
 			os.path.join(self.release_dir, 'config/final.yml'),
 			'config/final.yml',
@@ -102,8 +102,8 @@ class BoshRelease:
 			self.add_package(package)
 		for job in self.jobs:
 			self.add_job(job)
-		self.__bosh('upload', 'blobs')
-		self.tarball = self.__bosh('create', 'release', '--force', '--final', '--with-tarball', '--version', self.context['version'], capture='Release tarball')
+		self.__bosh('upload-blobs')
+		self.tarball = self.__bosh('create-release', '--force', '--final', '--tarball=output.tar.gz', '--version', self.context['version'], capture='Release tarball')
 		return self.tarball
 
 	def add_job(self, job):
@@ -112,7 +112,7 @@ class BoshRelease:
 		job_template = job.get('template', job_type)
 		is_errand = job.get('lifecycle', None) == 'errand'
 		package = job.get('package', None)
-		self.__bosh('generate', 'job', job_type)
+		self.__bosh('generate-job', job_type)
 		job_context = {
 			'job_name': job_name,
 			'job_type': job_type,
@@ -157,7 +157,7 @@ class BoshRelease:
 	def add_package(self, package):
 		name = package['name']
 		dir = package.get('dir', 'blobs')
-		self.__bosh('generate', 'package', name)
+		self.__bosh('generate-package', name)
 		target_dir = os.path.realpath(os.path.join(self.release_dir, dir, name))
 		package_dir = os.path.realpath(os.path.join(self.release_dir, 'packages', name))
 		mkdir_p(target_dir)
